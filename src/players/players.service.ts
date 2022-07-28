@@ -1,35 +1,52 @@
 import { CreatePlayerDto } from './dto/create-player.dto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Player } from './interfaces/player.interface';
-import { v4 as uuidv4 } from 'uuid';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class PlayersService {
-  private players: Player[] = [];
+  constructor(
+    @InjectModel('Player') private readonly playerModel: Model<Player>,
+  ) {}
+
   private readonly logger = new Logger(PlayersService.name);
+
   async createOrUpdatePlayer(createPlayerDto: CreatePlayerDto): Promise<void> {
-    this.logger.log(`player : ${createPlayerDto}`);
     const { email } = createPlayerDto;
-
-    let playerFound = this.players.find((player) => player.email === email);
-    this.create(createPlayerDto);
-  }
-
-  private create(createPlayerDto: CreatePlayerDto) {
-    const { name, email, phoneNumber } = createPlayerDto;
-    const player: Player = {
-      _id: uuidv4(),
-      name,
-      email,
-      phoneNumber,
-      ranking: 'A',
-      rankingPosition: 1,
-      playerUrlPhoto: 'any_url',
-    };
-    this.players.push(player);
+    const playerFound = await this.playerModel.findOne({ email }).exec();
+    if (playerFound) {
+      this.update(createPlayerDto);
+    } else {
+      this.create(createPlayerDto);
+    }
   }
 
   public get() {
-    return this.players;
+    return this.playerModel.find().exec();
+  }
+
+  public async getByEmail(email: string): Promise<Player> {
+    const playerFound = await this.playerModel.findOne({ email }).exec();
+    if (!playerFound) {
+      throw new NotFoundException(`Player with e-mail: ${email} not found`);
+    }
+    return playerFound;
+  }
+
+  async deletePlayer(email: string): Promise<any> {
+    return this.playerModel.remove({ email }).exec();
+  }
+
+  private create(createPlayerDto: CreatePlayerDto): Promise<Player> {
+    const playerCreated = new this.playerModel(createPlayerDto);
+    return playerCreated.save();
+  }
+
+  private update(createPlayerDto: CreatePlayerDto): Promise<Player> {
+    const { email } = createPlayerDto;
+    return this.playerModel
+      .findOneAndUpdate({ email }, { $set: createPlayerDto })
+      .exec();
   }
 }
