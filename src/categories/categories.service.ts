@@ -20,7 +20,7 @@ export class CategoriesService {
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     const { category } = createCategoryDto;
     const categoryFound = await this.categoryModel.findOne({ category }).exec();
-    if (!categoryFound) {
+    if (categoryFound) {
       throw new BadRequestException(`Category ${category} already registered.`);
     }
     const categorySaved = new this.categoryModel(createCategoryDto);

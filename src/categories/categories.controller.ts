@@ -26,12 +26,12 @@ export class CategoriesController {
   }
 
   @Get()
-  async consultarCategorias(): Promise<Array<Category>> {
+  async getCategories(): Promise<Array<Category>> {
     return this.categoriesService.getAll();
   }
 
   @Get('/:category')
-  async consultarCategoriaPeloId(
+  async getCategoryById(
     @Param('category') category: string,
   ): Promise<Category> {
     return this.categoriesService.getById(category);
@@ -39,15 +39,15 @@ export class CategoriesController {
 
   @Put('/:category')
   @UsePipes(ValidationPipe)
-  async atualizarCategoria(
-    @Body() atualizarCategoriaDto: UpdateCategoryDto,
-    @Param('category') categoria: string,
+  async updateCategory(
+    @Body() updateCategoryDto: UpdateCategoryDto,
+    @Param('category') category: string,
   ): Promise<void> {
-    await this.categoriesService.update(categoria, atualizarCategoriaDto);
+    await this.categoriesService.update(category, updateCategoryDto);
   }
 
-  @Post('/:category/jogadores/:playerId')
-  async atribuirCategoriaJogador(@Param() params: string[]): Promise<void> {
+  @Post('/:category/player/:playerId')
+  async joinCategoryPlayer(@Param() params: string[]): Promise<void> {
     return this.categoriesService.joinCategoriesPlayers(params);
   }
 }
